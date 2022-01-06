@@ -1,11 +1,13 @@
 from aiogram import Bot, types
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher import Dispatcher
-from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery
 from aiogram.utils import executor
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
+from aiogram.utils.callback_data import CallbackData
 
+from simple_calendar import SimpleCalendar
 import os
 
 
@@ -28,15 +30,18 @@ bi1 = InlineKeyboardButton('Да', callback_data='bi1')
 bi2 = InlineKeyboardButton('Нет', callback_data='bi2')
 kb4 = InlineKeyboardMarkup().add(bi1).add(bi2)
 
+calendar_callback = CallbackData('simple_calendar', 'act', 'year', 'month', 'day')
+
+
 class info(StatesGroup):
     name = State()
     date = State()
     time = State()
     cort = State()
-    trainer = State()
+    coach = State()
     inventory = State()
-    chek = State()
-    oplata = State()
+    receipt = State()
+
 
 bot=Bot(token='5034918189:AAF6W5Brq9UOZggdCyQl5r7VV0FT5jx5N9g')
 #bot=Bot(token=os.getenv('TOKEN'))
@@ -74,16 +79,24 @@ async def get_name(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
         data['name'] = message.text
     await info.next()
-    await message.reply('Выберите дату бронирования')
+    await message.answer("Выберите дату бронирования: ", reply_markup=await SimpleCalendar().start_calendar())
 
 
-@dp.message_handler(state = info.date)
-async def get_name(message: types.Message, state: FSMContext):
+@dp.callback_query_handler(calendar_callback.filter(), state=info.date)
+async def process_simple_calendar(callback_query: CallbackQuery, callback_data: dict, state: FSMContext):
+    selected, date = await SimpleCalendar().process_selection(callback_query, callback_data)
+    if selected:
+        await callback_query.message.answer(
+            f'Вы выбрали {date.strftime("%d/%m/%Y")}')
+        async with state.proxy() as data:
+            data['date'] = date.strftime("%d/%m/%Y")
+    print(data['date'])
     await info.next()
-    await message.answer('Выберите время бронирования')
+    await bot.send_message(callback_query.from_user.id, 'Выберите время бронирования')
 
 
-@dp.message_handler(state = info.time)
+
+@dp.message_handler(state=info.time)
 async def get_name(message: types.Message, state: FSMContext):
     await info.next()
     await message.answer('Выберите корт', reply_markup=kb2)
@@ -109,27 +122,27 @@ async def cort(callback_query: types.CallbackQuery, state: FSMContext):
         await bot.send_message(callback_query.from_user.id, 'Вы выбрали 3 корт \nВыберите тренера', reply_markup=kb3)
 
 
-@dp.callback_query_handler(lambda c: c.data, state=info.trainer)
+@dp.callback_query_handler(lambda c: c.data, state=info.coach)
 async def cort(callback_query: types.CallbackQuery, state: FSMContext):
     code = callback_query.data[-1]
     if code == '1':
         async with state.proxy() as data:
-            data['trainer'] = 'Изяслав Ростиславович'
+            data['coach'] = 'Изяслав Ростиславович'
         await info.next()
         await bot.send_message(callback_query.from_user.id, 'Вы выбрали Изяслава Ростиславовича \nНужен ли вам инвентарь?', reply_markup=kb4)
     elif code == '2':
         async with state.proxy() as data:
-            data['trainer'] = 'Ибанат Магомедович'
+            data['coach'] = 'Ибанат Магомедович'
         await info.next()
         await bot.send_message(callback_query.from_user.id, 'Вы выбрали Ибаната Магомедовича \nНужен ли вам инвентарь?',reply_markup=kb4)
     elif code == '3':
         async with state.proxy() as data:
-            data['trainer'] = 'Елена Чмых'
+            data['coach'] = 'Елена Чмых'
         await info.next()
         await bot.send_message(callback_query.from_user.id, 'Вы выбрали Елену Чмых \nНужен ли вам инвентарь?',reply_markup=kb4)
     elif code == '4':
         async with state.proxy() as data:
-            data['trainer'] = '-'
+            data['coach'] = '-'
         await info.next()
         await bot.send_message(callback_query.from_user.id, 'Вы выбрали отказаться от услуг тренера \nНужен ли вам инвентарь?',reply_markup=kb4)
 
@@ -142,16 +155,16 @@ async def cort(callback_query: types.CallbackQuery, state: FSMContext):
             data['inventory'] = 'Да'
         await info.next()
         await bot.send_message(callback_query.from_user.id, 'Вы выбрали приобрести инвентарь\n Предоставляю чек')
-    if code == '2':
+    elif code == '2':
         async with state.proxy() as data:
             data['inventory'] = 'Нет'
         await info.next()
         await bot.send_message(callback_query.from_user.id, 'Вы выбрали  не приобретать инвентарь\n Предоставляю чек')
-    await bot.send_message(callback_query.from_user.id, 'ФИО:\nДата и время: \nКорт:\nТренер:\nИнвентарь:')
+    await bot.send_message(callback_query.from_user.id, 'ФИО: {}\nДата и время: {}\nКорт: {}\nТренер: {}\nИнвентарь: {}'.format(data['name'],data['date'],data['cort'],data['coach'],data['inventory']))
     await bot.send_message(callback_query.from_user.id, 'К оплате 100 грн')
 
 
-@dp.message_handler(state = info.oplata)
+@dp.message_handler(state=info.receipt)
 async def get_name(message: types.Message, state: FSMContext):
     await message.answer('Плати налог')
     await state.finish()
