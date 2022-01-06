@@ -82,10 +82,6 @@ class db_help:
             print('We already had this info')
             return False
 
-    def add_name_id(self, id, name):
-        """Method to make your adding id and name to the table 'user' easier"""
-        return self.add_info('users', '*', [id, name])
-
     @connect_dec
     def return_info(self, where, what='*'):
         """This method is return info
@@ -105,62 +101,6 @@ class db_help:
         return names
 
     @connect_close
-    def make_db(self, name):
-        """Method to create new database (for difference queue)
-        - name - name of new database"""
-        if name not in self.have_db():
-            self.cursor.execute("CREATE TABLE '{}' ("
-                                "number INTEGER PRIMARY KEY AUTOINCREMENT,"
-                                " name   STRING  UNIQUE)".format(name))
-            return True
-        else:
-            print('We already have the same table')
-            return False
-
-    @connect_close
-    def del_db(self, name):
-        """Method to delete database
-        - name - name of database we want to delete"""
-        if name in self.have_db():
-            self.cursor.execute("DROP TABLE '{}'".format(name))
-            print('{} has deleted'.format(name))
-            return True
-        else:
-            print('We haven`t the same table')
-            return False
-
-    @connect_dec
-    def return_names(self, where):
-        """This method is return list of names from table with id
-        - where - name of table where info is exists"""
-        return_inf = self.cursor.execute(
-            "Select u.name FROM {where} w JOIN users u ON w.name=u.id".format(where=where)).fetchall()
-        return self.unzip(return_inf)
-
-    @connect_close
-    def update_name(self, person_id, name):
-        """This method is to update persons name
-        - id - persons id number
-        - name - name in what we want to change"""
-        if self.cursor.execute('SELECT name FROM users WHERE id={id}'.format(id=person_id)):
-            self.cursor.execute('UPDATE users'
-                                f" SET name = '{name}'"
-                                f" WHERE id = '{person_id}'")
-        else:
-            self.add_info('users', ['id', 'name'], [person_id, name])
-
-    @connect_close
-    def return_name(self, person_id):
-        """This method is returning persons name
-        - id - persons id number"""
-        if self.cursor.execute('SELECT name FROM users WHERE id={id}'.format(id=person_id)).fetchall():
-            a = self.cursor.execute('SELECT name FROM users WHERE id={id}'.format(id=person_id)).fetchall()
-            return self.unzip(a)[0]
-        else:
-            print('We haven`t your name in our database, please enter it')
-            return False
-
-    @connect_close
     def delete_info(self, table, column, info):
         """Method to delete info from our table
                - table - name of table from  we want to delete our info
@@ -175,25 +115,3 @@ class db_help:
         self.cursor.execute(
             "DELETE FROM {table} WHERE {column} = {quest}".format(table=table, column=column_formatted,
                                                                   quest=a))
-
-    @connect_close
-    def del_row(self, table, name, column='name'):
-        """Method to delete row in database and move queue
-         - table - name of table in with we want to paste our info
-        - name - name what we want to delete
-        - column - name of column where name is settle down
-        """
-        if list(self.cursor.execute("SELECT number "
-                                    " FROM {table} WHERE {row}='{name}'".format(table=table, name=name,
-                                                                                row=column))):
-            a = list(self.cursor.execute("SELECT number "
-                                         " FROM {table} WHERE {row}='{name}'".format(table=table, name=name,
-                                                                                     row=column)))[0][0]
-            print(a)
-            self.cursor.execute("DELETE FROM {table}"
-                                " WHERE {row}='{name}'".format(row=column, table=table, name=name))
-            self.cursor.execute("UPDATE {table}"
-                                " SET number=number-1"
-                                " WHERE number>{a}".format(table=table, row=column, name=name, a=a))
-            return True
-        return False
