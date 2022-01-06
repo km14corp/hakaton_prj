@@ -40,6 +40,7 @@ class db_help:
         try:
             self.conn = sqlite3.connect(self.db_name)
             self.cursor = self.conn.cursor()
+            print('connect success')
         except Exception as e:
             print(e)
 
