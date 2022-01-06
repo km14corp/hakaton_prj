@@ -6,6 +6,7 @@ if __name__ == "__main__":
 
     app = QtWidgets.QApplication(sys.argv)
     MainWindow = QtWidgets.QMainWindow()
+    print(MainWindow)
     ui = MainWindow_super()
     ui.setupUi(MainWindow)
     MainWindow.show()
