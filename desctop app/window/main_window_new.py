@@ -12,23 +12,11 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from .main_window import Ui_MainWindow
 
 
-class QMainWindow(Ui_MainWindow):
+class MainWindow_super(Ui_MainWindow):
     def setupUi(self, MainWindow):
         Ui_MainWindow.setupUi(self, MainWindow)
-        self.start_Button.clicked.connect(self.write_result)
+        self.pushButton_new_coach.clicked.connect(self.add_coach)
 
-    def write_result(self):
-        text = [self.line_can_find.text()]
-        text.extend(self.line_source.text().split(', '))
-        work = work_ua.Work_ua(text)
-        resumes = work.resumes(self.line_number.text())
-        value_resumes = [str(i) for i in resumes[1]]
-        jobs = work.jobs(self.line_number.text())
-        value_jobs = [str(i) for i in jobs[1]]
-        self.label_result_resume.setText('Результат: {}, кількість: {}'.format(resumes[0], len(value_resumes)))
-        self.label_value_resume.setText('\n'.join(value_resumes))
-        self.label_link_resume.setText('\n'.join(resumes[2]))
+    def add_coach(self):
+        pass
 
-        self.label_result_job.setText('Результат: {}, кількість: {}'.format(jobs[0], len(value_jobs)))
-        self.label_value_job.setText('\n'.join(value_jobs))
-        self.label_link_job.setText('\n'.join(jobs[2]))
