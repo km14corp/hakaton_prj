@@ -8,9 +8,9 @@ from aiogram.dispatcher.filters.state import State, StatesGroup
 
 import os
 
-
 b1 = InlineKeyboardButton('Режим Работы', callback_data='b1')
 kb1 = InlineKeyboardMarkup().add(b1)
+
 
 class info(StatesGroup):
     name = State()
@@ -22,8 +22,9 @@ class info(StatesGroup):
     chek = State()
     oplata = State()
 
-bot=Bot(token='5034918189:AAF6W5Brq9UOZggdCyQl5r7VV0FT5jx5N9g')
-#bot=Bot(token=os.getenv('TOKEN'))
+
+bot = Bot(token='5034918189:AAF6W5Brq9UOZggdCyQl5r7VV0FT5jx5N9g')
+# bot=Bot(token=os.getenv('TOKEN'))
 dp = Dispatcher(bot, storage=MemoryStorage())
 
 
@@ -31,21 +32,20 @@ async def on_startup(_):
     print('Бот в сети')
 
 
-@dp.message_handler(commands=['start','help'])
+@dp.message_handler(commands=['start', 'help'])
 async def commands_start(message: types.Message):
     try:
-        await bot.send_message(message.from_user.id, 'Здравствуй, давай запишемся в сквош-клуб')
-        await message.delete()
+        await bot.send_message(message.from_user.id, 'Здравствуй, давай запишемся в сквош-клуб', reply_markup=kb1)
     except:
-        await message.reply('Общение с ботом через ЛС, напишите ему: \nhttps://t.me/СпортзальчикBot')
+        await message.reply('Общение с ботом через ЛС, напишите ему: \nhttps://t.me/СпортзальчикBot', reply_markup=kb1)
 
 
-#@dp.message_handler(commands=['Режим_работы'])
-#async def sportzal_open_command(message: types.Message):
+# @dp.message_handler(commands=['Режим_работы'])
+# async def sportzal_open_command(message: types.Message):
 #    await bot.send_message(message.from_user.id, 'Пн-Пт: 7:00-22:00, Сб,Вс: 8:00-21:00')
 
 
-@dp.message_handler(commands=['Записаться'], state = None)
+@dp.message_handler(commands=['Записаться'], state=None)
 async def reservation(message: types.Message):
     await info.name.set()
     await message.answer('Начнем! \nВведите полное имя')
@@ -65,19 +65,19 @@ async def get_name(message: types.Message, state: FSMContext):
     await message.reply('Выберите дату бронирования')
 
 
-@dp.message_handler(state = info.date)
+@dp.message_handler(state=info.date)
 async def get_name(message: types.Message, state: FSMContext):
     await info.next()
     await message.answer('Выберите время бронирования')
 
 
-@dp.message_handler(state = info.time)
+@dp.message_handler(state=info.time)
 async def get_name(message: types.Message, state: FSMContext):
     await info.next()
     await message.answer('Выберите корт')
 
 
-@dp.message_handler(state = info.cort)
+@dp.message_handler(state=info.cort)
 async def get_name(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
         data['cort'] = message.text
@@ -85,38 +85,30 @@ async def get_name(message: types.Message, state: FSMContext):
     await message.answer('Выберите тренера')
 
 
-@dp.message_handler(state = info.trainer)
+@dp.message_handler(state=info.trainer)
 async def get_name(message: types.Message, state: FSMContext):
     await info.next()
     await message.answer('Нужен ли Вам инвентарь?')
 
 
-@dp.message_handler(state = info.inventory)
+@dp.message_handler(state=info.inventory)
 async def get_name(message: types.Message, state: FSMContext):
     await info.next()
     await message.answer('Вот ваш чек')
 
 
-@dp.message_handler(state = info.chek)
+@dp.message_handler(state=info.chek)
 async def get_name(message: types.Message, state: FSMContext):
     await info.next()
     await message.answer('К оплате 100 грн')
 
 
-@dp.message_handler(state = info.oplata)
+@dp.message_handler(state=info.oplata)
 async def get_name(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
         await message.answer(str(data))
     await message.answer('Поздравляю')
     await state.finish()
-
-
-
-
-
-
-
-
 
 
 executor.start_polling(dp, skip_updates=True, on_startup=on_startup)
