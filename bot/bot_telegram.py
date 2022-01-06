@@ -7,48 +7,16 @@ from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.utils.callback_data import CallbackData
 
+from bot.States import info
+from bot.config import TOKEN
+from bot.keyboards import kb3, kb4, kb2, kb1
 from simple_calendar import SimpleCalendar
 import os
 
-
-b1 = InlineKeyboardButton('Режим Работы', callback_data='b1')
-b2 = InlineKeyboardButton('Записаться', callback_data='b2')
-kb1 = InlineKeyboardMarkup().add(b1).add(b2)
-
-bk1 = InlineKeyboardButton('Первый корт', callback_data='bk1')
-bk2 = InlineKeyboardButton('Второй корт', callback_data='bk2')
-bk3 = InlineKeyboardButton('Третий корт', callback_data='bk3')
-kb2 = InlineKeyboardMarkup().add(bk1).add(bk2).add(bk3)
-
-bt1 = InlineKeyboardButton('Изяслав Ростиславович', callback_data='bt1')
-bt2 = InlineKeyboardButton('Ибанат Магомедович', callback_data='bt2')
-bt3 = InlineKeyboardButton('Елена Чмых', callback_data='bt3')
-bt4 = InlineKeyboardButton('Отказаться от услуг тренера', callback_data='bt4')
-kb3 = InlineKeyboardMarkup().add(bt1).add(bt2).add(bt3).add(bt4)
-
-bi1 = InlineKeyboardButton('Да', callback_data='bi1')
-bi2 = InlineKeyboardButton('Нет', callback_data='bi2')
-kb4 = InlineKeyboardMarkup().add(bi1).add(bi2)
-
-
-
 calendar_callback = CallbackData('simple_calendar', 'act', 'year', 'month', 'day')
 
-
-
-
-class info(StatesGroup):
-    name = State()
-    date = State()
-    time = State()
-    cort = State()
-    coach = State()
-    inventory = State()
-    receipt = State()
-
-
-bot=Bot(token='5034918189:AAF6W5Brq9UOZggdCyQl5r7VV0FT5jx5N9g')
-#bot=Bot(token=os.getenv('TOKEN'))
+bot = Bot(token=TOKEN)
+# bot=Bot(token=os.getenv('TOKEN'))
 dp = Dispatcher(bot, storage=MemoryStorage())
 
 
@@ -56,7 +24,7 @@ async def on_startup(_):
     print('Бот в сети')
 
 
-@dp.message_handler(commands=['start','help'])
+@dp.message_handler(commands=['start', 'help'])
 async def commands_start(message: types.Message):
     try:
         await bot.send_message(message.from_user.id, 'Здравствуй, давай запишемся в сквош-клуб', reply_markup=kb1)
@@ -99,7 +67,6 @@ async def process_simple_calendar(callback_query: CallbackQuery, callback_data: 
     await bot.send_message(callback_query.from_user.id, 'Выберите время бронирования')
 
 
-
 @dp.message_handler(state=info.time)
 async def get_name(message: types.Message, state: FSMContext):
     await info.next()
@@ -133,22 +100,26 @@ async def cort(callback_query: types.CallbackQuery, state: FSMContext):
         async with state.proxy() as data:
             data['coach'] = 'Изяслав Ростиславович'
         await info.next()
-        await bot.send_message(callback_query.from_user.id, 'Вы выбрали Изяслава Ростиславовича \nНужен ли вам инвентарь?', reply_markup=kb4)
+        await bot.send_message(callback_query.from_user.id,
+                               'Вы выбрали Изяслава Ростиславовича \nНужен ли вам инвентарь?', reply_markup=kb4)
     elif code == '2':
         async with state.proxy() as data:
             data['coach'] = 'Ибанат Магомедович'
         await info.next()
-        await bot.send_message(callback_query.from_user.id, 'Вы выбрали Ибаната Магомедовича \nНужен ли вам инвентарь?',reply_markup=kb4)
+        await bot.send_message(callback_query.from_user.id, 'Вы выбрали Ибаната Магомедовича \nНужен ли вам инвентарь?',
+                               reply_markup=kb4)
     elif code == '3':
         async with state.proxy() as data:
             data['coach'] = 'Елена Чмых'
         await info.next()
-        await bot.send_message(callback_query.from_user.id, 'Вы выбрали Елену Чмых \nНужен ли вам инвентарь?',reply_markup=kb4)
+        await bot.send_message(callback_query.from_user.id, 'Вы выбрали Елену Чмых \nНужен ли вам инвентарь?',
+                               reply_markup=kb4)
     elif code == '4':
         async with state.proxy() as data:
             data['coach'] = '-'
         await info.next()
-        await bot.send_message(callback_query.from_user.id, 'Вы выбрали отказаться от услуг тренера \nНужен ли вам инвентарь?',reply_markup=kb4)
+        await bot.send_message(callback_query.from_user.id,
+                               'Вы выбрали отказаться от услуг тренера \nНужен ли вам инвентарь?', reply_markup=kb4)
 
 
 @dp.callback_query_handler(lambda c: c.data, state=info.inventory)
@@ -164,7 +135,12 @@ async def cort(callback_query: types.CallbackQuery, state: FSMContext):
             data['inventory'] = 'Нет'
         await info.next()
         await bot.send_message(callback_query.from_user.id, 'Вы выбрали  не приобретать инвентарь\n Предоставляю чек')
-    await bot.send_message(callback_query.from_user.id, 'ФИО: {}\nДата и время: {}\nКорт: {}\nТренер: {}\nИнвентарь: {}'.format(data['name'],data['date'],data['cort'],data['coach'],data['inventory']))
+    await bot.send_message(callback_query.from_user.id,
+                           'ФИО: {}\nДата и время: {}\nКорт: {}\nТренер: {}\nИнвентарь: {}'.format(data['name'],
+                                                                                                   data['date'],
+                                                                                                   data['cort'],
+                                                                                                   data['coach'],
+                                                                                                   data['inventory']))
     await bot.send_message(callback_query.from_user.id, 'К оплате 100 грн')
 
 
@@ -172,16 +148,6 @@ async def cort(callback_query: types.CallbackQuery, state: FSMContext):
 async def get_name(message: types.Message, state: FSMContext):
     await message.answer('Плати налог')
     await state.finish()
-
-
-
-
-
-
-
-
-
-
 
 
 executor.start_polling(dp, skip_updates=True, on_startup=on_startup)
