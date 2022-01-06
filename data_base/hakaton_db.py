@@ -19,8 +19,8 @@ class data_base(db_help):
         db_help.add_info(self, 'basket', '*', [name, str(cost_of_order)])
         self.start_basket(name)
 
-    def return_coach_list(self):
-        arr_of_names = self.return_info('coach', 'name')
+    def return_list_names(self, table_name):
+        arr_of_names = self.return_info(table_name, 'name')
         arr_of_names = self.unzip(arr_of_names)
         return arr_of_names
 
