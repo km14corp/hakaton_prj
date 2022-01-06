@@ -24,6 +24,10 @@ class data_base(db_help):
         arr_of_names = self.unzip(arr_of_names)
         return arr_of_names
 
+    @connect_close
+    def return_row(self, where, when):
+        return self.cursor.execute(f"SELECT * FROM {where} WHERE name = '{when}'").fetchall()[0]
+
     def start_basket(self, name):
         """Delete row before 15 minutes"""
         time.sleep(15)
