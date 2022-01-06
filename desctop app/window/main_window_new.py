@@ -10,13 +10,24 @@
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 from .main_window import Ui_MainWindow
+from data_base.hakaton_db import data_base
 
 
 class MainWindow_super(Ui_MainWindow):
+    def __init__(self):
+        self.data = data_base('../data_base/main_db.db')
+
     def setupUi(self, MainWindow):
         Ui_MainWindow.setupUi(self, MainWindow)
         self.pushButton_new_coach.clicked.connect(self.add_coach)
 
-    def add_coach(self):
-        pass
+    def retranslateUi(self, MainWindow):
+        Ui_MainWindow.retranslateUi(self, MainWindow)
+        print(self.data.return_coach_list())
 
+    # def reboot_list(self):
+    #     for i in
+
+    def add_coach(self):
+        self.data.add_coach(self.lineEdit_coach_name.text(), self.lineEdit_coach_price, self.lineEdit_coach_id)
+        print(self.data.return_coach_list())

@@ -19,6 +19,11 @@ class data_base(db_help):
         db_help.add_info(self, 'basket', '*', [name, str(cost_of_order)])
         self.start_basket(name)
 
+    def return_coach_list(self):
+        arr_of_names = self.return_info('coach', 'name')
+        arr_of_names = self.unzip(arr_of_names)
+        return arr_of_names
+
     def start_basket(self, name):
         """Delete row before 15 minutes"""
         time.sleep(15)
@@ -32,10 +37,17 @@ class data_base(db_help):
         name_of_cost = 'cost' if name_of_table != 'basket' else 'cost_of_order'
         try:
             return self.cursor.execute(
-                    f"SELECT {name_of_cost} FROM {name_of_table} WHERE name='{name_of_thing}'").fetchall()[0]
+                f"SELECT {name_of_cost} FROM {name_of_table} WHERE name='{name_of_thing}'").fetchall()[0]
         except Exception as e:
             print(e)
             return False
+
+    @connect_close
+    def cost_hour(self, date, time):
+        """Returning the cost of hour
+        date - 'weekdays' or 'weekends'
+        time - the number when game will be started"""
+        return self.cursor.execute(f"SELECT cost FROM {date} WHERE time = '{time}'")
 
     @connect_close
     def add_to_basket(self, name, cost_of_order):

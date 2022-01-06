@@ -34,9 +34,9 @@ class Ui_MainWindow(object):
         self.lineEdit_coach_price = QtWidgets.QLineEdit(self.horizontalLayoutWidget)
         self.lineEdit_coach_price.setObjectName("lineEdit_coach_price")
         self.horizontalLayout.addWidget(self.lineEdit_coach_price)
-        self.lineEdit = QtWidgets.QLineEdit(self.horizontalLayoutWidget)
-        self.lineEdit.setObjectName("lineEdit")
-        self.horizontalLayout.addWidget(self.lineEdit)
+        self.lineEdit_coach_id = QtWidgets.QLineEdit(self.horizontalLayoutWidget)
+        self.lineEdit_coach_id.setObjectName("lineEdit_coach_id")
+        self.horizontalLayout.addWidget(self.lineEdit_coach_id)
         self.horizontalLayoutWidget_2 = QtWidgets.QWidget(self.coach)
         self.horizontalLayoutWidget_2.setGeometry(QtCore.QRect(10, 60, 761, 41))
         self.horizontalLayoutWidget_2.setObjectName("horizontalLayoutWidget_2")
@@ -110,7 +110,7 @@ class Ui_MainWindow(object):
         self.menubar.addAction(self.menu.menuAction())
 
         self.retranslateUi(MainWindow)
-        self.tabWidget_coach_id.setCurrentIndex(1)
+        self.tabWidget_coach_id.setCurrentIndex(0)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def retranslateUi(self, MainWindow):
