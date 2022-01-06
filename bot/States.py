@@ -9,3 +9,6 @@ class info(StatesGroup):
     coach = State()
     inventory = State()
     receipt = State()
+    tools = State()
+    choose = State()
+    choose_2 = State()
