@@ -30,7 +30,11 @@ bi1 = InlineKeyboardButton('Да', callback_data='bi1')
 bi2 = InlineKeyboardButton('Нет', callback_data='bi2')
 kb4 = InlineKeyboardMarkup().add(bi1).add(bi2)
 
+
+
 calendar_callback = CallbackData('simple_calendar', 'act', 'year', 'month', 'day')
+
+
 
 
 class info(StatesGroup):
