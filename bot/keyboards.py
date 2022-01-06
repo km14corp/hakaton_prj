@@ -18,3 +18,9 @@ kb3 = InlineKeyboardMarkup().add(bt1).add(bt2).add(bt3).add(bt4)
 bi1 = InlineKeyboardButton('Да', callback_data='bi1')
 bi2 = InlineKeyboardButton('Нет', callback_data='bi2')
 kb4 = InlineKeyboardMarkup().add(bi1).add(bi2)
+def make_markup(list_of_items):
+    kb = InlineKeyboardMarkup()
+    for i in list_of_items:
+        button = InlineKeyboardButton(i, callback_data=i)
+        kb.add(button)
+    return kb
