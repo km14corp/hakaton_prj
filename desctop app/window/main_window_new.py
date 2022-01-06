@@ -20,14 +20,28 @@ class MainWindow_super(Ui_MainWindow):
     def setupUi(self, MainWindow):
         Ui_MainWindow.setupUi(self, MainWindow)
         self.pushButton_new_coach.clicked.connect(self.add_coach)
+        self.pushButton_coach_delete.clicked.connect(self.delete_coach)
+        self.comboBox_coach.actionEvent(self.combo_box())
 
     def retranslateUi(self, MainWindow):
         Ui_MainWindow.retranslateUi(self, MainWindow)
-        print(self.data.return_coach_list())
+        print(self.data.return_list_names('coach'))
+        self.reboot_list()
 
-    # def reboot_list(self):
-    #     for i in
+    def reboot_list(self):
+        self.comboBox_coach.clear()
+        for i in self.data.return_list_names('coach'):
+            self.comboBox_coach.addItem(i)
+
+    def delete_coach(self):
+        self.data.delete_info('coach', ['name'], [self.lineEdit_coach_name.text()])
+        self.reboot_list()
 
     def add_coach(self):
-        self.data.add_coach(self.lineEdit_coach_name.text(), self.lineEdit_coach_price, self.lineEdit_coach_id)
-        print(self.data.return_coach_list())
+        if self.lineEdit_coach_name.text() != '' and self.lineEdit_coach_price != '' and self.lineEdit_coach_id != '':
+            self.data.add_coach(self.lineEdit_coach_name.text(), self.lineEdit_coach_price.text(),
+                                self.lineEdit_coach_id.text())
+        self.reboot_list()
+
+    def combo_box(self):
+        print('heh')
