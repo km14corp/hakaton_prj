@@ -24,7 +24,7 @@
      </rect>
     </property>
     <property name="currentIndex">
-     <number>1</number>
+     <number>0</number>
     </property>
     <widget class="QWidget" name="coach">
      <attribute name="title">
@@ -47,7 +47,7 @@
         <widget class="QLineEdit" name="lineEdit_coach_price"/>
        </item>
        <item>
-        <widget class="QLineEdit" name="lineEdit"/>
+        <widget class="QLineEdit" name="lineEdit_coach_id"/>
        </item>
       </layout>
      </widget>
