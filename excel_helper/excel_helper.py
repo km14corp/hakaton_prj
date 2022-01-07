@@ -151,12 +151,13 @@ class Excel_helper:
         self.workbook.save(filename="{name}.xlsx".format(name=self.name))
         return coaches
 
-    def set_property(self, date, name, time, court_number):
-        my_sheet = self.workbook[date]
-        my_sheet[str(chr(court_number + 65)) + str(weekdays_schedule.index(time) + 2)].value = name
-        self.workbook.save(filename="{name}.xlsx".format(name=self.name))
-
-    def set_property(self, date, name, time, court_number, coach):
-        my_sheet = self.workbook[date]
-        my_sheet[str(chr(court_number + 65)) + str(weekdays_schedule.index(time) + 2)].value = str(name) + ", тренер - " + str(coach)
-        self.workbook.save(filename="{name}.xlsx".format(name=self.name))
+    def set_property(self, date, name, time, court, coach=None):
+        if coach is None:
+            my_sheet = self.workbook[date]
+            my_sheet[str(chr(int(court) + 65)) + str(weekdays_schedule.index(time) + 2)].value = name
+            self.workbook.save(filename="{name}.xlsx".format(name=self.name))
+        else:
+            my_sheet = self.workbook[date]
+            my_sheet[str(chr(int(court) + 65)) + str(weekdays_schedule.index(time) + 2)].value = str(
+                name) + ", тренер - " + str(coach)
+            self.workbook.save(filename="{name}.xlsx".format(name=self.name))

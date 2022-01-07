@@ -8,12 +8,14 @@ from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.utils.callback_data import CallbackData
 
 from bot import keyboards
+from excel_helper.excel_helper import court_number
 from data_base.hakaton_db import data_base
 from bot.States import info
 from bot.config import TOKEN
-from bot.keyboards import kb4, kb2, kb1, kb3, kb5, kb6, kt
+from bot.keyboards import kb4, kb1, kb3, kb5, kb6, make_markup
 from simple_calendar import SimpleCalendar
 from excel_helper.excel_helper import Excel_helper
+
 import os
 
 db = data_base('../data_base/main_db.db')
@@ -58,10 +60,11 @@ async def get_name(message: types.Message, state: FSMContext):
     await info.next()
     await message.answer("Выберите дату бронирования: ", reply_markup=await SimpleCalendar().start_calendar())
 
-
+time = []
 @dp.callback_query_handler(calendar_callback.filter(), state=info.date)
 async def process_simple_calendar(callback_query: CallbackQuery, callback_data: dict, state: FSMContext):
     selected, date = await SimpleCalendar().process_selection(callback_query, callback_data)
+    global time
     if selected:
         await callback_query.message.answer(
             f'Вы выбрали {date.strftime("%d/%m/%Y")}')
@@ -69,18 +72,20 @@ async def process_simple_calendar(callback_query: CallbackQuery, callback_data: 
             data['date'] = date.strftime("%d.%m.%Y")
             print(data['date'])
     await info.next()
-    await bot.send_message(callback_query.from_user.id, 'Выберите время бронирования', reply_markup=keyboards.make_markup(excel_db.get_available_time(data['date'])))
+    time = excel_db.get_available_time(data['date'])
+    await bot.send_message(callback_query.from_user.id, 'Выберите время бронирования', reply_markup=keyboards.make_markup(time))
 
 
 @dp.callback_query_handler(lambda c: c.data, state=info.time)
 async def cort(callback_query: types.CallbackQuery, state: FSMContext):
-    global list_of_time
+    global time
     code = callback_query.data
     print(code)
-    for i in list_of_time:
+    for i in time:
         if code == i:
             async with state.proxy() as data:
                 data['time'] = i
+            kb2 = make_markup(excel_db.get_available_court(data['date'],data['time']))
             await info.next()
             await bot.send_message(callback_query.from_user.id,
                                    'Вы выбрали время - {} \nВыберите корт'.format(data['time']), reply_markup=kb2)
@@ -88,22 +93,15 @@ async def cort(callback_query: types.CallbackQuery, state: FSMContext):
 
 @dp.callback_query_handler(lambda c: c.data, state=info.cort)
 async def cort(callback_query: types.CallbackQuery, state: FSMContext):
-    code = callback_query.data[-1]
-    if code == '1':
-        async with state.proxy() as data:
-            data['cort'] = 1
-        await info.next()
-        await bot.send_message(callback_query.from_user.id, 'Вы выбрали 1 корт \nВыберите тренера', reply_markup=kb3)
-    elif code == '2':
-        async with state.proxy() as data:
-            data['cort'] = 2
-        await info.next()
-        await bot.send_message(callback_query.from_user.id, 'Вы выбрали 2 корт \nВыберите тренера', reply_markup=kb3)
-    elif code == '3':
-        async with state.proxy() as data:
-            data['cort'] = 3
-        await info.next()
-        await bot.send_message(callback_query.from_user.id, 'Вы выбрали 3 корт \nВыберите тренера', reply_markup=kb3)
+    code = callback_query.data
+    print(code)
+    for i in range(court_number+1):
+        if code == str(i):
+            async with state.proxy() as data:
+                data['cort'] = i
+            await info.next()
+            await bot.send_message(callback_query.from_user.id, 'Вы выбрали {} корт \nВыберите тренера'.format(i),
+                                   reply_markup=kb3)
 
 
 @dp.callback_query_handler(lambda c: c.data, state=info.coach)
@@ -162,9 +160,13 @@ async def inventory(callback_query: types.CallbackQuery, state: FSMContext):
         # full cost
         full_cost = 0
         full_cost += db.return_cost('coach', data['coach'])
-        full_cost += db.return_time_cost('cost_weekdays', data['time'].split(':')[0])
+        full_cost += db.return_time_cost('cost_weekdays', data['time'].split('-')[0])
         full_cost += sum(db.return_cost('tools', i) for i in data['tools'].split())
         await bot.send_message(callback_query.from_user.id, 'К оплате' + str(full_cost))
+        if data['coach'] == '-':
+            excel_db.set_property(data['date'], data['name'], data['time'], data['cort'])
+        else:
+            excel_db.set_property(data['date'], data['name'], data['time'], data['cort'], data['coach'])
 
 
 @dp.callback_query_handler(lambda c: c.data, state=info.tools)
@@ -175,13 +177,13 @@ async def tools(callback_query: types.CallbackQuery, state: FSMContext):
             data['tools'] = db.return_list_names('tools')[0]
         await info.choose.set()
         await bot.send_message(callback_query.from_user.id,
-                               'Вы выбрали приобрести мячик\n Хотите ли взять Ракетку?', reply_markup=kb6)
+                               'Вы выбрали приобрести {}\n Приобрести еще {}?'.format(db.return_list_names('tools')[0],db.return_list_names('tools')[1]), reply_markup=kb6)
     elif code == db.return_list_names('tools')[1]:
         async with state.proxy() as data:
             data['tools'] = db.return_list_names('tools')[1]
         await info.choose_2.set()
         await bot.send_message(callback_query.from_user.id,
-                               'Вы выбрали приобрести ракетку\n Хотите ли взять мячик?', reply_markup=kb6)
+                               'Вы выбрали приобрести {}\n Приобрести еще {}?'.format(db.return_list_names('tools')[1],db.return_list_names('tools')[0]), reply_markup=kb6)
 
 
 @dp.callback_query_handler(lambda c: c.data, state=info.choose)
@@ -205,19 +207,18 @@ async def choose(callback_query: types.CallbackQuery, state: FSMContext):
         # full cost
         full_cost = 0
         full_cost += db.return_cost('coach', data['coach'])
-        full_cost += db.return_time_cost('cost_weekdays', data['time'].split(':')[0])
+        full_cost += db.return_time_cost('cost_weekdays', data['time'].split('-')[0])
         full_cost += sum(db.return_cost('tools', i) for i in data['tools'].split())
-        await bot.send_message(callback_query.from_user.id, 'К оплате' + str(full_cost))
-
-
-@dp.callback_query_handler(lambda c: c.data, state=info.choose_2)
-async def choose_2(callback_query: types.CallbackQuery, state: FSMContext):
-    code = callback_query.data
-    if code == 'Да':
+        print(full_cost)
+        await bot.send_message(callback_query.from_user.id, 'К оплате ' + ' ' + str(full_cost))
+        if data['coach'] == '-':
+            Excel_helper.set_property(data['date'], data['name'], data['time'], data['cort'])
+        else:
+            Excel_helper.set_property(data['date'], data['name'], data['time'], data['cort'], data['coach'])
+    else:
         async with state.proxy() as data:
-            data['tools'] += ' ' + 'Мячик'
-        await info.receipt.set()
-        await bot.send_message(callback_query.from_user.id, 'Вы выбрали добавить ракетку\nСоставляю чек')
+            data['tools'] += ''
+        await bot.send_message(callback_query.from_user.id, '\nСоставляю чек')
         await bot.send_message(callback_query.from_user.id,
                                'ФИО: {}\nДата и время: {}\nКорт: {}\nТренер: {}\nИнвентарь: {}\n{}'.format(data['name'],
                                                                                                            data['date'],
@@ -231,9 +232,69 @@ async def choose_2(callback_query: types.CallbackQuery, state: FSMContext):
         # full cost
         full_cost = 0
         full_cost += db.return_cost('coach', data['coach'])
-        full_cost += db.return_time_cost('cost_weekdays', data['time'].split(':')[0])
+        full_cost += db.return_time_cost('cost_weekdays', data['time'].split('-')[0])
         full_cost += sum(db.return_cost('tools', i) for i in data['tools'].split())
-        await bot.send_message(callback_query.from_user.id, 'К оплате ' + str(full_cost))
+        await bot.send_message(callback_query.from_user.id, 'К оплате ' + ' ' + str(full_cost))
+        if data['coach'] == '-':
+            excel_db.set_property(data['date'], data['name'], data['time'], data['cort'])
+        else:
+            excel_db.set_property(data['date'], data['name'], data['time'], data['cort'], data['coach'])
+
+@dp.callback_query_handler(lambda c: c.data, state=info.choose_2)
+async def choose_2(callback_query: types.CallbackQuery, state: FSMContext):
+    code = callback_query.data
+    if code == 'Да':
+        async with state.proxy() as data:
+            data['tools'] += ' ' + 'Мячик'
+        await state.finish()
+        await bot.send_message(callback_query.from_user.id, 'Вы выбрали добавить мячик\nСоставляю чек')
+        await bot.send_message(callback_query.from_user.id,
+                               'ФИО: {}\nДата и время: {}\nКорт: {}\nТренер: {}\nИнвентарь: {}\n{}'.format(data['name'],
+                                                                                                           data['date'],
+                                                                                                           data['cort'],
+                                                                                                           data[
+                                                                                                               'coach'],
+                                                                                                           data[
+                                                                                                               'inventory'],
+                                                                                                           data[
+                                                                                                               'tools']))
+        # full cost
+        full_cost = 0
+        full_cost += db.return_cost('coach', data['coach'])
+        full_cost += db.return_time_cost('cost_weekdays', data['time'].split('-')[0])
+        full_cost += sum(db.return_cost('tools', i) for i in data['tools'].split())
+        await bot.send_message(callback_query.from_user.id, 'К оплате ' +' '+str(full_cost))
+        if data['coach'] == '-':
+            excel_db.set_property(data['date'], data['name'], data['time'], data['cort'])
+        else:
+            excel_db.set_property(data['date'], data['name'], data['time'], data['cort'], data['coach'])
+    else:
+        async with state.proxy() as data:
+            data['tools'] += ''
+        await bot.send_message(callback_query.from_user.id, '\nСоставляю чек')
+        await bot.send_message(callback_query.from_user.id,
+                               'ФИО: {}\nДата и время: {}\nКорт: {}\nТренер: {}\nИнвентарь: {}\n{}'.format(data['name'],
+                                                                                                           data['date'],
+                                                                                                           data['cort'],
+                                                                                                           data[
+                                                                                                               'coach'],
+                                                                                                           data[
+                                                                                                               'inventory'],
+                                                                                                           data[
+                                                                                                               'tools']))
+        # full cost
+        full_cost = 0
+        full_cost += db.return_cost('coach', data['coach'])
+        full_cost += db.return_time_cost('cost_weekdays', data['time'].split('-')[0])
+        full_cost += sum(db.return_cost('tools', i) for i in data['tools'].split())
+        await bot.send_message(callback_query.from_user.id, 'К оплате ' + ' ' + str(full_cost))
+        if data['coach'] == '-':
+            excel_db.set_property(data['date'], data['name'], data['time'], data['cort'])
+        else:
+            excel_db.set_property(data['date'], data['name'], data['time'], data['cort'], data['coach'])
+
+
+
 
 if __name__ == '__main__':
     executor.start_polling(dp, skip_updates=True, on_startup=on_startup)

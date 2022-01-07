@@ -76,7 +76,6 @@ list_of_time = ['8:00', '9:00']
 async def cort(callback_query: types.CallbackQuery, state: FSMContext):
     global list_of_time
     code = callback_query.data
-    print(code)
     for i in list_of_time:
         if code == i:
             async with state.proxy() as data:
@@ -88,22 +87,14 @@ async def cort(callback_query: types.CallbackQuery, state: FSMContext):
 
 @dp.callback_query_handler(lambda c: c.data, state=info.cort)
 async def cort(callback_query: types.CallbackQuery, state: FSMContext):
-    code = callback_query.data[-1]
-    if code == '1':
-        async with state.proxy() as data:
-            data['cort'] = 1
-        await info.next()
-        await bot.send_message(callback_query.from_user.id, 'Вы выбрали 1 корт \nВыберите тренера', reply_markup=kb3)
-    elif code == '2':
-        async with state.proxy() as data:
-            data['cort'] = 2
-        await info.next()
-        await bot.send_message(callback_query.from_user.id, 'Вы выбрали 2 корт \nВыберите тренера', reply_markup=kb3)
-    elif code == '3':
-        async with state.proxy() as data:
-            data['cort'] = 3
-        await info.next()
-        await bot.send_message(callback_query.from_user.id, 'Вы выбрали 3 корт \nВыберите тренера', reply_markup=kb3)
+    global court_number
+    code = callback_query.data
+    for i in court_number:
+        if code == i:
+            async with state.proxy() as data:
+                data['cort'] = i
+            await info.next()
+            await bot.send_message(callback_query.from_user.id, 'Вы выбрали {} корт \nВыберите тренера'.format(i), reply_markup=kb3)
 
 
 @dp.callback_query_handler(lambda c: c.data, state=info.coach)
