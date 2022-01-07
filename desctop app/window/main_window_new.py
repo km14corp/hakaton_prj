@@ -60,7 +60,7 @@ class MainWindow_super(Ui_MainWindow, QMainWindow):
         if self.lineEdit_coach_name.text() != '' and self.lineEdit_coach_price != '' and self.lineEdit_coach_id != '':
             self.data.add_coach(self.lineEdit_coach_name.text(), self.lineEdit_coach_price.text(),
                                 self.lineEdit_coach_id.text())
-        self.reboot_list('tools')
+        self.reboot_list('coach')
 
     def add_item(self):
         if self.lineEdit_item_name.text() != '' and self.lineEdit_item_price != '':
