@@ -41,10 +41,15 @@ class data_base(db_help):
         name_of_cost = 'cost' if name_of_table != 'basket' else 'cost_of_order'
         try:
             return self.cursor.execute(
-                f"SELECT {name_of_cost} FROM {name_of_table} WHERE name='{name_of_thing}'").fetchall()[0]
+                f"SELECT {name_of_cost} FROM {name_of_table} WHERE name='{name_of_thing}'").fetchall()[0][0]
         except Exception as e:
             print(e)
             return False
+
+    @connect_close
+    def return_time_cost(self, day_of_week, time):
+        return self.cursor.execute(
+            f"SELECT cost FROM {day_of_week} WHERE time='{time}'").fetchall()[0][0]
 
     @connect_close
     def cost_hour(self, date, time):
