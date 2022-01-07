@@ -68,7 +68,10 @@ async def process_simple_calendar(callback_query: CallbackQuery, callback_data: 
     await info.next()
     await bot.send_message(callback_query.from_user.id, 'Выберите время бронирования', reply_markup=kt)
 
-list_of_time=['8:00','9:00']
+
+list_of_time = ['8:00', '9:00']
+
+
 @dp.callback_query_handler(lambda c: c.data, state=info.time)
 async def cort(callback_query: types.CallbackQuery, state: FSMContext):
     global list_of_time
@@ -79,8 +82,8 @@ async def cort(callback_query: types.CallbackQuery, state: FSMContext):
             async with state.proxy() as data:
                 data['time'] = i
             await info.next()
-            await bot.send_message(callback_query.from_user.id, 'Вы выбрали время - {} \nВыберите корт'.format(data['time']), reply_markup=kb2)
-
+            await bot.send_message(callback_query.from_user.id,
+                                   'Вы выбрали время - {} \nВыберите корт'.format(data['time']), reply_markup=kb2)
 
 
 @dp.callback_query_handler(lambda c: c.data, state=info.cort)
@@ -112,18 +115,21 @@ async def coach(callback_query: types.CallbackQuery, state: FSMContext):
             data['coach'] = db.return_list_names('coach')[0]
         await info.next()
         await bot.send_message(callback_query.from_user.id,
-                               'Вы выбрали {} \nНужен ли вам инвентарь?'.format(db.return_list_names('coach')[0]), reply_markup=kb4)
+                               'Вы выбрали {} \nНужен ли вам инвентарь?'.format(db.return_list_names('coach')[0]),
+                               reply_markup=kb4)
     elif code == db.return_list_names('coach')[1]:
         async with state.proxy() as data:
             data['coach'] = db.return_list_names('coach')[1]
         await info.next()
-        await bot.send_message(callback_query.from_user.id, 'Вы выбрали {} \nНужен ли вам инвентарь?'.format(db.return_list_names('coach')[1]),
+        await bot.send_message(callback_query.from_user.id,
+                               'Вы выбрали {} \nНужен ли вам инвентарь?'.format(db.return_list_names('coach')[1]),
                                reply_markup=kb4)
     elif code == db.return_list_names('coach')[2]:
         async with state.proxy() as data:
             data['coach'] = db.return_list_names('coach')[2]
         await info.next()
-        await bot.send_message(callback_query.from_user.id, 'Вы выбрали {} \nНужен ли вам инвентарь?'.format(db.return_list_names('coach')[2]),
+        await bot.send_message(callback_query.from_user.id,
+                               'Вы выбрали {} \nНужен ли вам инвентарь?'.format(db.return_list_names('coach')[2]),
                                reply_markup=kb4)
     elif code == 'bt1':
         async with state.proxy() as data:
@@ -140,22 +146,26 @@ async def inventory(callback_query: types.CallbackQuery, state: FSMContext):
         async with state.proxy() as data:
             data['inventory'] = 'Да'
         await info.tools.set()
-        await bot.send_message(callback_query.from_user.id, 'Вы выбрали приобрести инвентарь\n Что Вы бы хотели приобрести?',reply_markup=kb5)
+        await bot.send_message(callback_query.from_user.id,
+                               'Вы выбрали приобрести инвентарь\n Что Вы бы хотели приобрести?', reply_markup=kb5)
     elif code == '2':
         async with state.proxy() as data:
             data['inventory'] = 'Нет'
             data['tools'] = ''
         await info.next()
         await bot.send_message(callback_query.from_user.id, 'Вы выбрали  не приобретать инвентарь\n Предоставляю чек')
-    await bot.send_message(callback_query.from_user.id,
-                           'ФИО: {}\nДата и время: {}\nКорт: {}\nТренер: {}\nИнвентарь: {}\n{}'.format(data['name'],
-                                                                                                       data['date'],
-                                                                                                       data['cort'],
-                                                                                                       data['coach'],
-                                                                                                       data[
-                                                                                                           'inventory'],
-                                                                                                       data['tools']))
-    await bot.send_message(callback_query.from_user.id, 'К оплате', db.return_cost('coach', state.proxy()['coach']))
+        await bot.send_message(callback_query.from_user.id,
+                               'ФИО: {}\nДата и время: {}, {time}\nКорт: {}\nТренер: {}\nИнвентарь: {}\n{}'.format(
+                                   data['name'], data['date'], data['cort'], data['coach'], data['inventory'],
+                                   data['tools'], time=data['time']))
+        print(data)
+        # full cost
+        full_cost = 0
+        full_cost += db.return_cost('coach', data['coach'])
+        full_cost += db.return_time_cost('cost_weekdays', data['time'].split(':')[0])
+        full_cost += sum(db.return_cost('tools', i) for i in data['tools'].split())
+        await bot.send_message(callback_query.from_user.id, 'К оплате' + str(full_cost))
+
 
 @dp.callback_query_handler(lambda c: c.data, state=info.tools)
 async def tools(callback_query: types.CallbackQuery, state: FSMContext):
@@ -173,40 +183,57 @@ async def tools(callback_query: types.CallbackQuery, state: FSMContext):
         await bot.send_message(callback_query.from_user.id,
                                'Вы выбрали приобрести ракетку\n Хотите ли взять мячик?', reply_markup=kb6)
 
+
 @dp.callback_query_handler(lambda c: c.data, state=info.choose)
 async def choose(callback_query: types.CallbackQuery, state: FSMContext):
     code = callback_query.data
     if code == 'Да':
         async with state.proxy() as data:
-            data['tools'] += ' '+'Ракетка'
+            data['tools'] += ' ' + 'Ракетка'
         await info.receipt.set()
         await bot.send_message(callback_query.from_user.id, 'Вы выбрали добавить ракетку\nСоставляю чек')
-    await bot.send_message(callback_query.from_user.id,
-                           'ФИО: {}\nДата и время: {}\nКорт: {}\nТренер: {}\nИнвентарь: {}\n{}'.format(data['name'],
-                                                                                                   data['date'],
-                                                                                                   data['cort'],
-                                                                                                   data['coach'],
-                                                                                                   data['inventory'],data['tools']))
-    await bot.send_message(callback_query.from_user.id, 'К оплате',db.return_cost('coach',state.proxy()['coach']))
+        await bot.send_message(callback_query.from_user.id,
+                               'ФИО: {}\nДата и время: {}\nКорт: {}\nТренер: {}\nИнвентарь: {}\n{}'.format(data['name'],
+                                                                                                           data['date'],
+                                                                                                           data['cort'],
+                                                                                                           data[
+                                                                                                               'coach'],
+                                                                                                           data[
+                                                                                                               'inventory'],
+                                                                                                           data[
+                                                                                                               'tools']))
+        # full cost
+        full_cost = 0
+        full_cost += db.return_cost('coach', data['coach'])
+        full_cost += db.return_time_cost('cost_weekdays', data['time'].split(':')[0])
+        full_cost += sum(db.return_cost('tools', i) for i in data['tools'].split())
+        await bot.send_message(callback_query.from_user.id, 'К оплате' + str(full_cost))
+
 
 @dp.callback_query_handler(lambda c: c.data, state=info.choose_2)
 async def choose_2(callback_query: types.CallbackQuery, state: FSMContext):
     code = callback_query.data
     if code == 'Да':
         async with state.proxy() as data:
-            data['tools'] += ' '+'Мячик'
+            data['tools'] += ' ' + 'Мячик'
         await info.receipt.set()
         await bot.send_message(callback_query.from_user.id, 'Вы выбрали добавить ракетку\nСоставляю чек')
-    await bot.send_message(callback_query.from_user.id,
-                           'ФИО: {}\nДата и время: {}\nКорт: {}\nТренер: {}\nИнвентарь: {}\n{}'.format(data['name'],
-                                                                                                   data['date'],
-                                                                                                   data['cort'],
-                                                                                                   data['coach'],
-                                                                                                   data['inventory'],data['tools']))
-    await bot.send_message(callback_query.from_user.id, 'К оплате', db.return_cost('coach',state.proxy()['coach']))
-
-
-
+        await bot.send_message(callback_query.from_user.id,
+                               'ФИО: {}\nДата и время: {}\nКорт: {}\nТренер: {}\nИнвентарь: {}\n{}'.format(data['name'],
+                                                                                                           data['date'],
+                                                                                                           data['cort'],
+                                                                                                           data[
+                                                                                                               'coach'],
+                                                                                                           data[
+                                                                                                               'inventory'],
+                                                                                                           data[
+                                                                                                               'tools']))
+        # full cost
+        full_cost = 0
+        full_cost += db.return_cost('coach', data['coach'])
+        full_cost += db.return_time_cost('cost_weekdays', data['time'].split(':')[0])
+        full_cost += sum(db.return_cost('tools', i) for i in data['tools'].split())
+        await bot.send_message(callback_query.from_user.id, 'К оплате ' + str(full_cost))
 
 
 executor.start_polling(dp, skip_updates=True, on_startup=on_startup)
