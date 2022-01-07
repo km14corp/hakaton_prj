@@ -160,12 +160,3 @@ class Excel_helper:
         my_sheet = self.workbook[date]
         my_sheet[str(chr(court_number + 65)) + str(weekdays_schedule.index(time) + 2)].value = str(name) + ", тренер - " + str(coach)
         self.workbook.save(filename="{name}.xlsx".format(name=self.name))
-
-
-excel_helper = Excel_helper("qwerty")
-excel_helper.get_available_time("06.01.2022")
-excel_helper.get_available_court("06.01.2022", "9-10")
-print(excel_helper.get_busy_coach("06.01.2022", "13-14"))
-excel_helper.set_property("06.01.2022", "Alex", "13-14", 3, "Петр")
-
-print(excel_helper.workbook.worksheets)
